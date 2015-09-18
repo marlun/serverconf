@@ -1,0 +1,117 @@
+# Mutt configuration file Martin Lundberg
+# TODO:
+#		- Move alias file into a synced file
+#		- Move vars into a synced file
+source $XDG_CONFIG_HOME/mutt/vars
+source $XDG_CONFIG_HOME/mutt/themes/darth
+
+# Paths ----------------------------------------------------------------------
+set folder           = ~/mail/martin
+set alias_file       = $XDG_CONFIG_HOME/mutt/aliases
+set certificate_file = $XDG_CONFIG_HOME/mutt/certificates
+set mailcap_path     = $XDG_CONFIG_HOME/mutt/mailcap
+set header_cache     = $XDG_CACHE_HOME/mutt/headers
+set message_cachedir = $XDG_CACHE_HOME/mutt/bodies
+
+# Account settings ------------------------------------------------------------
+mailboxes =INBOX =archive
+set spoolfile = "+INBOX"
+set mbox      = "+archive"
+set postponed = "+drafts"
+set record		= "+sent"
+alternates $my_alternate
+
+# SMTP setup with msmtp -------------------------------------------------------
+# set from     = $my_email
+# set sendmail = "/usr/local/bin/msmtp -a $my_mailbox"
+# set sendmail_wait = 0
+# unset record
+
+# Basic Options --------------------------------------------------------------
+source $alias_file       # source alias file for tab-completion
+set wait_key = no        # shut up, mutt
+set mbox_type = Maildir  # mailbox type
+set timeout = 3          # idle time before scanning
+set mail_check = 0       # minimum time between scans
+unset move               # gmail does that
+set delete               # don't ask, just do
+unset confirmappend      # don't ask, just do!
+set quit                 # don't ask, just do!!
+unset mark_old           # read/new is good enough for me
+set pipe_decode          # strip headers and eval mimes when piping
+set thorough_search      # strip headers and eval mimes before searching
+set imap_peek = no
+
+set index_format = "[%Z] %(%a %Y-%m-%d %R)  %-20.20F  %s"
+set sort = threads                         # like gmail
+set sort_aux = last-date-received  # like gmail
+set uncollapse_jump         # don't collapse on an unread message
+set collapse_unread = no	# Don't collapse on when there's unread messages
+
+set pager_index_lines = 8 # number of index lines to show
+set pager_stop             # don't go to next message automatically
+set wrap = 80
+set menu_scroll            # scroll in menus
+set tilde                  # show tildes like in vim
+unset markers              # no ugly plus signs
+set quote_regexp = "^( {0,4}[>|:#%]| {0,4}[a-z0-9]+[>|]+)+"
+alternative_order text/plain text/enriched text/html
+auto_view text/html
+
+set realname = "Martin Lundberg"     # who am i?
+set use_from												 # generate a From: header
+set fast_reply                       # skip to compose when replying
+set envelope_from                    # which from?
+set sig_dashes                       # dashes before sig
+set edit_headers                     # show headers when composing
+set fcc_attach                       # save attachments with the body
+unset mime_forward                   # forward attachments as part of body
+set forward_format = "Fwd: %s"       # format of subject when forwarding
+set forward_decode                   # decode when forwarding
+set attribution = "On %d, %n wrote:" # format of quoting header
+set reply_to                         # reply to Reply to: field
+set reverse_name                     # reply as whomever it was to
+set include                          # include message in replies
+set forward_quote                    # include message in forwards
+set followup_to
+set honor_followup_to=yes
+
+# Start editing e-mail instantly in vim
+set editor="vim +FixWhitespace +'normal }'"
+
+# Bindings & Macros ----------------------------------------------------------
+
+# Vim bindings for pager since I don't want to learn another set of key
+# bindings.
+bind pager k previous-line
+bind pager j next-line
+bind pager gg top
+bind pager G bottom
+bind pager \cu half-up
+bind pager \cd half-down
+bind pager N search-opposite
+
+# Hooks ----------------------------------------------------------
+
+# Change signature depending on which e-mail I'm sending as
+send-hook "~f $my_email" 'set signature=$XDG_CONFIG_HOME/mutt/sig'
+send-hook "~f $my_alternate" 'set signature=$XDG_CONFIG_HOME/mutt/sig.work'
+
+# Temp ----------------------------------------------------------
+
+# Since Gmail stores the message in both INBOX and "[Gmail]/All Mail" (=archive)
+# we archive the message by just deleting it from the INBOX. If we want to
+# actually delete it we need to move it to [Gmail]/Trash (=trash)
+# macro index S "<delete-thread><enter>" "Archive all messages in thread"
+# macro index \cd "<tag-thread><tag-prefix><save-message>=trash<enter>" "Delete all messages in thread"
+
+# macro index,pager d "<tag-prefix><save-message>=trash<enter>" "Trash current or tagged messages"
+# macro attach W <save-entry><kill-line>/home/marlun/sync/Documents/Temp/<enter> "Save attachment to sync folder"
+# macro index M "<save-message>?<toggle-mailboxes>" "move a message to a mailbox"
+# macro index S "<enter-command>unset wait_key<enter><shell-escape>mutt-notmuch-py ~/.mail/temporary/search<enter><change-folder-readonly>+temporary/search<enter>" "search mail (using notmuch)"
+# macro index \Cr "T~U<enter><tag-prefix><clear-flag>N<untag-pattern>.<enter>" "mark all messages as read"
+
+# 'L' performs a notmuch query, showing only the results
+# macro index L "<enter-command>unset wait_key<enter><shell-escape>read -p 'notmuch query: ' x; echo \$x >~/.cache/mutt_terms<enter><limit>~i \"\`notmuch search --output=messages \$(cat ~/.cache/mutt_terms) | head -n 600 | perl -le '@a=<>;chomp@a;s/\^id:// for@a;$,=\"|\";print@a'\`\"<enter>" "show only messages matching a notmuch pattern"
+# 'a' shows all messages again (supersedes default <alias> binding)
+# macro index A "<limit>all\n" "show all messages (undo limit)"
